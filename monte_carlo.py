@@ -6,6 +6,10 @@ import math
 import os
 import json
 
+MASTER_STATS = ['Altitude','Time','Vertical velocity','Vertical acceleration','Lateral distance','Lateral direction','Lateral velocity','Lateral acceleration','Roll rate','Pitch rate','Yaw rate','Thrust']
+
+MASTER_VARS = ['Rod Angle', 'Rod Direction', 'Wind Speed', 'Component Mass Factor']
+
 def run_sims(rocket_file,properties,num,filename,an_id):
     with open(filename,'w') as sim_file:
         sim_file.write('MIT Rocket Team OpenRocket MCDA v0.1 Analysis' + os.linesep)
@@ -51,5 +55,4 @@ def run_sims(rocket_file,properties,num,filename,an_id):
         return sims
 
 if __name__ == '__main__':
-    props = ['Altitude','Time','Vertical velocity','Vertical acceleration','Lateral distance','Lateral direction','Lateral velocity','Lateral acceleration','Roll rate','Pitch rate','Yaw rate','Thrust']
     run_sims('/root/rockets/testrocket.ork', props, 20, 'results.txt','Test1')
