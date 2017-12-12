@@ -1,5 +1,5 @@
 import flask
-from flask import Flask, request, render_template, current_app, send_from_directory
+from flask import Flask, Response, request, render_template, current_app, send_from_directory
 from werkzeug.utils import secure_filename
 from multiprocessing import Process
 import string, json, random, os

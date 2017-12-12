@@ -20,6 +20,7 @@ MASTER_VARS = [
     {'name':'Rod angle','units':'degrees','defaults':[0,5]},
     {'name':'Rod direction','units':'degrees','defaults':[0,5]},
     {'name':'Wind speed','units':'m/s','defaults':[15,5]},
+    {'name':'Wind direction','units':'m/s','defaults':[0,10]},
     {'name':'Launch temperature','units':'celcius','defaults':[15,2]},
     {'name':'Launch pressure','units':'pascal','defaults':[101325,100]},
     {'name':'Rod length','units':'m','defaults':[1,0.05]}
@@ -47,12 +48,14 @@ def get_points(id,old_points):
 
 def ellipses(points, max_std_devs):
     x, y, z = zip(*points)
-
     cov = np.cov(x, y)
-    lambda_, v = np.linalg.eig(cov)
-    lambda_ = np.sqrt(lambda_)
+    if not np.isnan(np.min(cov)) and not np.isinf(np.sum(cov)):
+        lambda_, v = np.linalg.eig(cov)
+        lambda_ = np.sqrt(lambda_)
 
-    return [{'x':np.mean(x),'y':np.mean(y),'width':lambda_[0]*j*2,'height':lambda_[1]*j*2,'angle':np.rad2deg(np.arccos(v[0, 0]))} for j in range(1,max_std_devs+1)]
+        return [{'x':np.mean(x),'y':np.mean(y),'width':lambda_[0]*j*2,'height':lambda_[1]*j*2,'angle':np.rad2deg(np.arccos(v[0, 0]))} for j in range(1,max_std_devs+1)]
+    else:
+        return []
 
 def highlight_csv(points):
     csv_string = ""
@@ -70,24 +73,17 @@ def highlight_csv(points):
     return csv_string
 
 def plot_points(points):
-    plt.tick_params(top='off', bottom='off', left='off', right='off', labelleft='off', labelbottom='on')
     ax = plt.figure(figsize=(10,10)).add_subplot(1, 1, 1)
-    ax.spines['left'].set_position('center')
-    ax.spines['bottom'].set_position('center')
-
-    ax.spines['top'].set_visible(False)
-    ax.spines['right'].set_visible(False)
-
-    ax.grid(True)
 
     if len(points) > 0:
         for e in ellipses(points, 3):
             ell = Ellipse(xy=(e['x'], e['y']), width=e['width'], height=e['height'], angle=e['angle'])
             ell.set_facecolor('none')
+            ell.set_edgecolor('black')
             ax.add_artist(ell)
 
         x, y, z = zip(*points);
-        plt.scatter(x, y)
+        ax.scatter(x, y)
 
     imgdata = StringIO.StringIO()
     plt.gcf().savefig(imgdata, format='png', bbox_inches='tight')
@@ -106,7 +102,7 @@ def run_sims(settings):
         sim_file.write('Date: ' + datetime.now().strftime("%Y-%m-%d %H:%M") + os.linesep)
         sim_file.write('Params: ' + json.dumps(settings) + os.linesep + os.linesep)
 
-    with orhelper.OpenRocketInstance('/root/mcda/req/OpenRocket.jar', log_level='ERROR'):
+    with orhelper.OpenRocketInstance('/root/mcda/req/OpenRocket.jar', log_level='DEBUG'):
         # Load the document and get simulation
         orh = orhelper.Helper()
         doc = orh.load_doc('/root/mcda/rockets/'+settings['filename'])
@@ -119,9 +115,11 @@ def run_sims(settings):
 
         for p in range(settings['iters']+1):
             print('Running simulation ', p)
+            
+            wind_dir = get_prop(settings['gauss'],'Wind direction')
 
             opts.setLaunchRodAngle(math.radians(get_prop(settings['gauss'],'Rod angle')))
-            opts.setLaunchRodDirection(math.radians(get_prop(settings['gauss'],'Rod direction')))
+            opts.setLaunchRodDirection(math.radians(get_prop(settings['gauss'],'Rod direction')-wind_dir))
 
             opts.setWindSpeedAverage(get_prop(settings['gauss'],'Wind speed'))
             opts.setLaunchTemperature(273.15+get_prop(settings['gauss'],'Launch temperature'))
@@ -141,6 +139,8 @@ def run_sims(settings):
             events = orh.get_events(sim)
 
             for key in data:
+                if key == "Lateral direction":
+                    data[key] += math.radians(wind_dir)
                 data[key] = data[key].tolist()
 
             sims.append({'data':data,'events':events})
