@@ -5,15 +5,16 @@ import random
 import math
 import os
 import json
-import datetime
+from datetime import datetime
 
 import matplotlib, StringIO, urllib, base64
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
+from matplotlib.patches import Ellipse
 
-DEFAULT_STATS = ['Lateral distance', 'Lateral direction', 'Time']
+DEFAULT_STATS = ['Lateral distance', 'Lateral direction', 'Time', 'Altitude']
 
-MASTER_STATS = ['Altitude','Vertical velocity','Vertical acceleration','Lateral velocity','Lateral acceleration','Roll rate','Pitch rate','Yaw rate','Thrust']
+MASTER_STATS = ['Vertical velocity','Vertical acceleration','Lateral velocity','Lateral acceleration','Roll rate','Pitch rate','Yaw rate','Thrust']
 
 MASTER_VARS = [
     {'name':'Rod angle','units':'degrees','defaults':[0,5]},
@@ -39,18 +40,54 @@ def get_points(id,old_points):
                 if 'data' in sim:
                     lastDist = sim['data']['Lateral distance'][-1]
                     lastDir = sim['data']['Lateral direction'][-1]
+                    altitude = max(sim['data']['Altitude'])
 
-                    old_points.append((lastDist*math.cos(lastDir), lastDist*math.sin(lastDir)))
+                    old_points.append((lastDist*math.cos(lastDir), lastDist*math.sin(lastDir), altitude))
             i += 1
-def plot_points(points):
 
-    ax = plt.figure().add_subplot(1, 1, 1)
+def ellipses(points, max_std_devs):
+    x, y, z = zip(*points)
+
+    cov = np.cov(x, y)
+    lambda_, v = np.linalg.eig(cov)
+    lambda_ = np.sqrt(lambda_)
+
+    return [{'x':np.mean(x),'y':np.mean(y),'width':lambda_[0]*j*2,'height':lambda_[1]*j*2,'angle':np.rad2deg(np.arccos(v[0, 0]))} for j in range(1,max_std_devs+1)]
+
+def highlight_csv(points):
+    csv_string = ""
+
+    csv_string += '"MIT Rocket Team Cassandra v0.1 Highlight Analysis"\n'
+    csv_string += '"Date: ' + datetime.now().strftime("%Y-%m-%d %H:%M") + '"\n'
+    csv_string += 'Elipses: ,x,y,width,height,angle\n'
+    for i, e in enumerate(ellipses(points,3)):
+        csv_string += ",".join(str(k) for k in [str(i+1) + " dev",e['x'],e['y'],e['width'],e['height'],e['angle']]) + "\n"
+
+    csv_string += "\n\nx,y,z\n"
+    for point in points:
+        csv_string += ','.join([str(coord) for coord in point]) + '\n'
+
+    return csv_string
+
+def plot_points(points):
+    plt.tick_params(top='off', bottom='off', left='off', right='off', labelleft='off', labelbottom='on')
+    ax = plt.figure(figsize=(10,10)).add_subplot(1, 1, 1)
     ax.spines['left'].set_position('center')
     ax.spines['bottom'].set_position('center')
+
+    ax.spines['top'].set_visible(False)
+    ax.spines['right'].set_visible(False)
+
     ax.grid(True)
 
     if len(points) > 0:
-        plt.scatter(*zip(*points))
+        for e in ellipses(points, 3):
+            ell = Ellipse(xy=(e['x'], e['y']), width=e['width'], height=e['height'], angle=e['angle'])
+            ell.set_facecolor('none')
+            ax.add_artist(ell)
+
+        x, y, z = zip(*points);
+        plt.scatter(x, y)
 
     imgdata = StringIO.StringIO()
     plt.gcf().savefig(imgdata, format='png', bbox_inches='tight')
@@ -66,7 +103,7 @@ def run_sims(settings):
     log_file = "logs/" + settings['id'] + ".cass"
     with open(log_file,'w') as sim_file:
         sim_file.write('MIT Rocket Team Cassandra v0.1 Analysis' + os.linesep)
-        sim_file.write('Date: ' + str(datetime.date.today()) + os.linesep)
+        sim_file.write('Date: ' + datetime.now().strftime("%Y-%m-%d %H:%M") + os.linesep)
         sim_file.write('Params: ' + json.dumps(settings) + os.linesep + os.linesep)
 
     with orhelper.OpenRocketInstance('/root/mcda/req/OpenRocket.jar', log_level='ERROR'):
@@ -114,4 +151,6 @@ def run_sims(settings):
         return sims
 
 if __name__ == '__main__':
-    print(plot_points(get_points('pB85W2mtmIKR20ibY2GQ')))
+    points = []
+    get_points('report(6)',points)
+    print(highlight_csv(points))

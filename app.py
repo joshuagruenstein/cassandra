@@ -60,6 +60,16 @@ def download_sim():
     logs = os.path.join(current_app.root_path, 'logs')
     return send_from_directory(directory=logs, filename=running['id']+".cass")
 
+@app.route("/highlights")
+def download_highlights():
+    if running:
+        monte_carlo.get_points(running['id'],running['points'])
+        csv = monte_carlo.highlight_csv(running['points'])
+
+        return Response(csv,mimetype="text/csv",headers={"Content-disposition":"attachment; filename=highlights.csv","Cache-Control":"no-cache, no-store, must-revalidate"})
+    else:
+        return "No simulation running", 400
+
 @app.route("/start",methods=['POST'])
 def start():
     global running
