@@ -16,7 +16,7 @@ class OpenRocketInstance(object):
 
         startJVM(getDefaultJVMPath(), "-Djava.class.path=%s" % jar_path)
         orp = JPackage("net").sf.openrocket
-        
+
         startup = JClass("net.sf.openrocket.startup.Startup")
 
         orp.startup.Startup.initializeLogging()
@@ -26,16 +26,16 @@ class OpenRocketInstance(object):
         orp.startup.Startup2.loadMotor()
 
     def __enter__(self):
-        print 'Starting openrocket'
+        print('Starting openrocket')
 
     def __exit__(self, ty, value, tb):
 
         shutdownJVM()
 
         if not ty is None:
-            print 'Exception while calling openrocket'
-            print 'Exception info : ', ty, value, tb
-            print 'Traceback : '
+            print('Exception while calling openrocket')
+            print('Exception info : ', ty, value, tb)
+            print('Traceback : ')
             traceback.print_exception(ty, value, tb)
 
 class Helper(object):
@@ -234,4 +234,3 @@ class AbstractSimulationListener(object):
 
     def postWindModel(self, status, wind):
         return None
-

@@ -2,7 +2,7 @@
 *.pyc
 *.so
 __pycache__/
-
+logs/
 *.egg
 *.egg-info
 dist

@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+
+{% block content %}
+    <div class="tile is-ancestor">
+        <div class="tile is-parent is-vertical">
+            <div class="tile is-child ">
+                <p class="title">Simulation Properties</p>
+                <div class="content">
+                    <ul>
+                        <li>Filename: "{{ sim.filename }}"</li>
+                        <li>Total iterations: {{ sim.iters }}</li>
+                        <li>Tracking properties: {{ sim.params|join(', ') }}</li>
+                        <li>Gaussian variables:</li>
+                        <ul>
+                            {% for var in sim.gauss %}
+                                <li>{{ var.name }}: {{ var.mu }} {{ var.units }} &plusmn; {{ var.sigma }}</li>
+                            {% endfor %}
+                        </ul>
+                    </ul>
+                </div>
+            </div>
+            <div class="tile is-child">
+                <a href="/download" class="button is-link" style="margin-bottom:8px" download target="_blank">
+                    <span class="icon">
+                        <i class="fa fa-arrow-circle-o-down"></i>
+                    </span><span>Download Report</span>
+                </a>
+
+                <div class="field has-addons">
+                    <p class="control">
+                        <input class="input" id="abort-password-field" type="password" placeholder="Password">
+                    </p>
+                    <p class="control">
+                        <a id="abort" class="button is-warning" onclick="abort_simulation()">
+                            <span class="icon">
+                                <i class="fa fa-ban"></i>
+                            </span>
+                            <span>Abort Simulation</span>
+                        </a>
+                    </p>
+                </div>
+            </div>
+
+        </div>
+        <div class="tile is-6 is-parent">
+            <div class="tile is-child notification is-primary">
+                <p class="title">Status: <span id="sim-number">{{ rep.iters }}</span>/{{ sim.iters }} complete</p>
+                <div class="content">
+                    <progress class="progress is-large" value="12" max="20"></progress>
+                    <img style="border-radius:3px;width:100%"src="{{ rep.img }}">
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block script %}
+    function abort_simulation() {
+        var password = document.getElementById("abort-password-field").value;
+        if (!password) {
+            alert_error("Must enter password to abort simulation.")
+            return;
+        }
+
+        var formData = new FormData();
+        formData.append('password',password);
+        var request = new XMLHttpRequest();
+
+        request.onreadystatechange = function() {
+            if (request.readyState === 4) {
+                if (request.status === 200) location.reload(true);
+                else alert_error("Failed to abort simulation. Likely incorrect password.");
+            }
+        }
+
+        request.open("POST", window.location.hostname+"/abort");
+        request.send(formData);
+    }
+{% endblock %}

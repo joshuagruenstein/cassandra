@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Cassandra</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bulma/0.6.1/css/bulma.min.css">
+</head>
+<body style="display: flex;min-height: 100vh;flex-direction: column;">
+    <section class="hero is-primary" style="background-color:#A31F34">
+        <div class="hero-body">
+            <div class="container">
+                <h1 class="title">
+                    Cassandra v0.1
+                </h1>
+                <h2 class="subtitle">
+                    Monte Carlo Dispersion Analysis Engine
+                </h2>
+            </div>
+        </div>
+    </section>
+
+    <section class="section" style="flex:1">
+        <div class="notification is-warning" style="display:none" id="warning">
+            <button class="delete" onclick="document.getElementById('warning').style.display='none'"></button>
+            <strong> Fatal error. </strong> <span id="warning-text"></span>
+        </div>
+
+        {% block content %}{% endblock %}
+    </section>
+
+    <footer class="footer">
+        <div class="container">
+            <div class="content has-text-centered">
+                <p>
+                    <strong>Cassandra</strong> (v0.1) by <a href="http://rocketry.mit.edu/">MIT Rocket Team</a>. For usage information visit the <a href="#">wiki page</a>.
+                </p>
+            </div>
+        </div>
+    </footer>
+    <script>
+        function alert_error(message) {
+            document.getElementById('warning-text').innerText = message;
+            document.getElementById('warning').style.display='block';
+        }
+
+        {% block script %}{% endblock %}
+    </script>
+</body>
+</html>

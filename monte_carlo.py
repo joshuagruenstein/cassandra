@@ -8,19 +8,22 @@ import json
 
 MASTER_STATS = ['Altitude','Time','Vertical velocity','Vertical acceleration','Lateral distance','Lateral direction','Lateral velocity','Lateral acceleration','Roll rate','Pitch rate','Yaw rate','Thrust']
 
-MASTER_VARS = ['Rod Angle', 'Rod Direction', 'Wind Speed', 'Component Mass Factor']
+MASTER_VARS = [{'name':'Rod angle','units':'degrees','defaults':[0,5]}, {'name':'Rod direction','units':'degrees','defaults':[0,5]}, {'name':'Wind speed','units':'m/s','defaults':[15,5]}]
 
-def run_sims(rocket_file,properties,num,filename,an_id):
-    with open(filename,'w') as sim_file:
-        sim_file.write('MIT Rocket Team OpenRocket MCDA v0.1 Analysis' + os.linesep)
+def get_prop(gauss,name):
+    next((i for i in gauss if i['name'] == name), None)
+
+def run_sims(settings):
+    log_file = "logs/" + settings['id'] + ".cass"
+    with open(log_file,'w') as sim_file:
+        sim_file.write('MIT Rocket Team Cassandra v0.1 Analysis' + os.linesep)
         sim_file.write('Date: ' + str(datetime.date.today()) + os.linesep)
-        sim_file.write('Analysis ID: ' + str(an_id) + os.linesep + os.linesep)
+        sim_file.write('Params: ' + json.dumps(settings) + os.linesep + os.linesep)
 
     with orhelper.OpenRocketInstance('/root/OpenRocket.jar', log_level='DEBUG'):
-
         # Load the document and get simulation
         orh = orhelper.Helper()
-        doc = orh.load_doc(rocket_file)
+        doc = orh.load_doc('/root/mcda/rockets/'+settings['filename'])
         sim = doc.getSimulation(0)
 
         opts = sim.getOptions()
@@ -28,31 +31,35 @@ def run_sims(rocket_file,properties,num,filename,an_id):
 
         sims = []
 
-        for p in range(num):
-            print 'Running simulation ', p
+        for p in range(settings['iters']):
+            print('Running simulation ', p)
+            i = get_prop(settings.gauss,'Rod angle')
+            opts.setLaunchRodAngle(math.radians(gauss(i['mu'], i['sigma'])))
 
-            opts.setLaunchRodAngle(math.radians( gauss(45, 5) ))    # 45 +- 5 deg in direction
-            opts.setLaunchRodDirection(math.radians( gauss(0, 5) )) # 0 +- 5 deg in direction
-            opts.setWindSpeedAverage( gauss(15, 5) )                # 15 +- 5 m/s in wind
+            i = get_prop(settings.gauss,'Rod direction')
+            opts.setLaunchRodDirection(math.radians(gauss(i['mu'], i['sigma'])))
+
+            i = get_prop(settings.gauss,'Wind speed')
+            opts.setWindSpeedAverage(gauss(i['mu'], i['sigma']))
+
+            """
             for component_name in ('Nose cone', 'Body tube'):       # 5% in the mass of various components
                 component = orh.get_component_named( rocket, component_name )
                 mass = component.getMass()
                 component.setMassOverridden(True)
                 component.setOverrideMass( mass * gauss(1.0, 0.05) )
+            """
 
             orh.run_simulation(sim)
-            data = orh.get_timeseries(sim, properties)
+            data = orh.get_timeseries(sim, settings['params'])
             events = orh.get_events(sim)
-            
+
             for key in data:
                 data[key] = data[key].tolist()
 
             sims.append({'data':data,'events':events})
-            with open(filename,'a') as sim_file:
+            with open(log_file,'a') as sim_file:
                 json.dump(sims[-1], sim_file)
                 sim_file.write(os.linesep)
 
         return sims
-
-if __name__ == '__main__':
-    run_sims('/root/rockets/testrocket.ork', props, 20, 'results.txt','Test1')
