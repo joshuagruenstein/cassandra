@@ -60,7 +60,7 @@
             <article class="tile is-child notification is-info">
                 <div class="content">
                     <p class="title">Timeseries Data</p>
-                    <p class="subtitle">Eg, what data to record.</p>
+                    <p class="subtitle">Eg, what additional data to record.</p>
                     <div class="content">
                         <div id="checkboxes">
                             {% for param in params %}
@@ -132,11 +132,6 @@
         var values = []
         for (var i=0; i<checkboxes.children.length; i+=2) {
             if (checkboxes.children[i].children[0].checked) values.push(checkboxes.children[i].innerText.trim());
-        }
-
-        if (values.length == 0) {
-            alert_error("You must select at least one timeseries variable to record.");
-            return null;
         }
 
         return values;

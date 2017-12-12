@@ -9,7 +9,9 @@
                     <ul>
                         <li>Filename: "{{ sim.filename }}"</li>
                         <li>Total iterations: {{ sim.iters }}</li>
+                        {% if sim.params|length > 0 %}
                         <li>Tracking properties: {{ sim.params|join(', ') }}</li>
+                        {% endif %}
                         <li>Gaussian variables:</li>
                         <ul>
                             {% for var in sim.gauss %}
