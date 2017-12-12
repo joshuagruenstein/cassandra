@@ -6,12 +6,51 @@ import math
 import os
 import json
 
+import matplotlib, StringIO, urllib, base64
+matplotlib.use('Agg')
+import matplotlib.pyplot as plt
+
 MASTER_STATS = ['Altitude','Time','Vertical velocity','Vertical acceleration','Lateral distance','Lateral direction','Lateral velocity','Lateral acceleration','Roll rate','Pitch rate','Yaw rate','Thrust']
 
 MASTER_VARS = [{'name':'Rod angle','units':'degrees','defaults':[0,5]}, {'name':'Rod direction','units':'degrees','defaults':[0,5]}, {'name':'Wind speed','units':'m/s','defaults':[15,5]}]
 
 def get_prop(gauss,name):
     next((i for i in gauss if i['name'] == name), None)
+
+def get_points(id):
+    i = 0
+    points = []
+    with open("logs/" + id + ".cass",'r') as f:
+        for x in f:
+            if i < 4:
+                i += 1
+                continue
+
+            sim = json.loads(x)
+
+            if 'data' in sim:
+                lastDist = sim['data']['Lateral distance'][-1]
+                lastDir = sim['data']['Lateral direction'][-1]
+
+                points.append((lastDist*math.cos(lastDir), lastDist*math.sin(lastDir)))
+        return points
+
+def plot_points(points):
+
+    ax = plt.figure().add_subplot(1, 1, 1)
+    ax.spines['left'].set_position('center')
+    ax.spines['bottom'].set_position('center')
+    ax.grid(True)
+
+    plt.scatter(*zip(*points))
+
+    imgdata = StringIO.StringIO()
+    plt.gcf().savefig(imgdata, format='png')
+    imgdata.seek(0)
+
+    uri = 'data:image/png;base64,' + urllib.quote(base64.b64encode(imgdata.buf))
+
+    return uri
 
 def run_sims(settings):
     log_file = "logs/" + settings['id'] + ".cass"
@@ -63,3 +102,6 @@ def run_sims(settings):
                 sim_file.write(os.linesep)
 
         return sims
+
+if __name__ == '__main__':
+    print(plot_points(get_points('pB85W2mtmIKR20ibY2GQ')))
