@@ -20,24 +20,20 @@ MASTER_VARS = [{'name':'Rod angle','units':'degrees','defaults':[0,5]}, {'name':
 def get_prop(gauss,name):
     return next((i for i in gauss if str(i['name'].split('(')[0].strip()) == str(name)), None)
 
-def get_points(id):
-    i = 0
+def get_points(id,old_points):
+    i = -4
     points = []
     with open("logs/" + id + ".cass",'r') as f:
         for x in f:
-            if i < 4:
-                i += 1
-                continue
+            if i > len(old_points):
+                sim = json.loads(x)
 
-            sim = json.loads(x)
+                if 'data' in sim:
+                    lastDist = sim['data']['Lateral distance'][-1]
+                    lastDir = sim['data']['Lateral direction'][-1]
 
-            if 'data' in sim:
-                lastDist = sim['data']['Lateral distance'][-1]
-                lastDir = sim['data']['Lateral direction'][-1]
-
-                points.append((lastDist*math.cos(lastDir), lastDist*math.sin(lastDir)))
-        return points
-
+                    old_points.append((lastDist*math.cos(lastDir), lastDist*math.sin(lastDir)))
+            i += 1
 def plot_points(points):
 
     ax = plt.figure().add_subplot(1, 1, 1)
@@ -53,6 +49,8 @@ def plot_points(points):
     imgdata.seek(0)
 
     uri = 'data:image/png;base64,' + urllib.quote(base64.b64encode(imgdata.buf))
+    
+    plt.close('all')
 
     return uri
 

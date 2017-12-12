@@ -1,11 +1,17 @@
-from flask import Flask, request, render_template
+import flask
+from flask import Flask, request, render_template, current_app, send_from_directory
 from werkzeug.utils import secure_filename
 from multiprocessing import Process
 import string, json, random, os
 import monte_carlo
 
-app = Flask(__name__)
-app.config['UPLOAD_FOLDER'] = 'rockets'
+class MyFlask(flask.Flask):
+    def get_send_file_max_age(self, name):
+        if name.lower().endswith('.cass'):
+            return 0
+        return flask.Flask.get_send_file_max_age(self, name)
+
+app = MyFlask(__name__)
 
 PASSWORD = "a"
 
@@ -18,9 +24,9 @@ def allowed_file(filename):
 @app.route("/")
 def main():
     if running:
-        points = monte_carlo.get_points(running['id'])
-        img = monte_carlo.plot_points(points)
-        return render_template('running.html',sim=running,rep={'iters':len(points),'img':img})
+        monte_carlo.get_points(running['id'],running['points'])
+        img = monte_carlo.plot_points(running['points'])
+        return render_template('running.html',sim=running,rep={'iters':len(running['points']),'img':img})
     else:
         return render_template('start.html',vars=monte_carlo.MASTER_VARS, params=monte_carlo.MASTER_STATS)
 
@@ -41,7 +47,8 @@ def kill_sim():
 
 @app.route("/download")
 def download_sim():
-    return "download"
+    logs = os.path.join(current_app.root_path, 'logs')
+    return send_from_directory(directory=logs, filename=running['id']+".cass")
 
 @app.route("/start",methods=['POST'])
 def start():
@@ -61,7 +68,7 @@ def start():
         return "File upload error", 500
 
     filename = secure_filename(ork.filename)
-    ork.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+    ork.save(os.path.join('rockets', filename))
 
     sim_id = ''.join([random.choice(string.ascii_letters + string.digits + string.digits) for _ in range(20)])
 
@@ -69,5 +76,7 @@ def start():
 
     thread = Process(target=monte_carlo.run_sims, args=(running,))
     thread.start()
+
+    running['points'] = []
 
     return "success", 200
