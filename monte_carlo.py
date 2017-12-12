@@ -15,10 +15,18 @@ DEFAULT_STATS = ['Lateral distance', 'Lateral direction', 'Time']
 
 MASTER_STATS = ['Altitude','Vertical velocity','Vertical acceleration','Lateral velocity','Lateral acceleration','Roll rate','Pitch rate','Yaw rate','Thrust']
 
-MASTER_VARS = [{'name':'Rod angle','units':'degrees','defaults':[0,5]}, {'name':'Rod direction','units':'degrees','defaults':[0,5]}, {'name':'Wind speed','units':'m/s','defaults':[15,5]}]
+MASTER_VARS = [
+    {'name':'Rod angle','units':'degrees','defaults':[0,5]},
+    {'name':'Rod direction','units':'degrees','defaults':[0,5]},
+    {'name':'Wind speed','units':'m/s','defaults':[15,5]},
+    {'name':'Launch temperature','units':'celcius','defaults':[15,2]},
+    {'name':'Launch pressure','units':'pascal','defaults':[101325,100]},
+    {'name':'Rod length','units':'m','defaults':[1,0.05]}
+]
 
 def get_prop(gauss,name):
-    return next((i for i in gauss if str(i['name'].split('(')[0].strip()) == str(name)), None)
+    i = next((i for i in gauss if str(i['name'].split('(')[0].strip()) == str(name)), None)
+    return random.gauss(i['mu'], i['sigma'])
 
 def get_points(id,old_points):
     i = -4
@@ -45,11 +53,11 @@ def plot_points(points):
         plt.scatter(*zip(*points))
 
     imgdata = StringIO.StringIO()
-    plt.gcf().savefig(imgdata, format='png')
+    plt.gcf().savefig(imgdata, format='png', bbox_inches='tight')
     imgdata.seek(0)
 
     uri = 'data:image/png;base64,' + urllib.quote(base64.b64encode(imgdata.buf))
-    
+
     plt.close('all')
 
     return uri
@@ -61,7 +69,7 @@ def run_sims(settings):
         sim_file.write('Date: ' + str(datetime.date.today()) + os.linesep)
         sim_file.write('Params: ' + json.dumps(settings) + os.linesep + os.linesep)
 
-    with orhelper.OpenRocketInstance('/root/mcda/req/OpenRocket.jar', log_level='DEBUG'):
+    with orhelper.OpenRocketInstance('/root/mcda/req/OpenRocket.jar', log_level='ERROR'):
         # Load the document and get simulation
         orh = orhelper.Helper()
         doc = orh.load_doc('/root/mcda/rockets/'+settings['filename'])
@@ -72,16 +80,16 @@ def run_sims(settings):
 
         sims = []
 
-        for p in range(settings['iters']):
+        for p in range(settings['iters']+1):
             print('Running simulation ', p)
-            i = get_prop(settings['gauss'],'Rod angle')
-            opts.setLaunchRodAngle(math.radians(random.gauss(i['mu'], i['sigma'])))
 
-            i = get_prop(settings['gauss'],'Rod direction')
-            opts.setLaunchRodDirection(math.radians(random.gauss(i['mu'], i['sigma'])))
+            opts.setLaunchRodAngle(math.radians(get_prop(settings['gauss'],'Rod angle')))
+            opts.setLaunchRodDirection(math.radians(get_prop(settings['gauss'],'Rod direction')))
 
-            i = get_prop(settings['gauss'],'Wind speed')
-            opts.setWindSpeedAverage(random.gauss(i['mu'], i['sigma']))
+            opts.setWindSpeedAverage(get_prop(settings['gauss'],'Wind speed'))
+            opts.setLaunchTemperature(273.15+get_prop(settings['gauss'],'Launch temperature'))
+            opts.setLaunchPressure(get_prop(settings['gauss'],'Launch pressure'))
+            opts.setLaunchRodLength(get_prop(settings['gauss'],'Rod length'))
 
             """
             for component_name in ('Nose cone', 'Body tube'):       # 5% in the mass of various components

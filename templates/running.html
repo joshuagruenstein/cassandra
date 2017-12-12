@@ -46,8 +46,8 @@
             <div class="tile is-child notification is-primary">
                 <p class="title">Status: <span id="sim-number">{{ rep.iters }}</span>/{{ sim.iters }} complete</p>
                 <div class="content">
-                    <progress class="progress is-large" value="{{ rep.iters }}" max="{{ sim.iters }}"></progress>
-                    <img style="border-radius:3px;width:100%"src="{{ rep.img }}">
+                    <progress class="progress is-large" id="progress-bar" value="{{ rep.iters }}" max="{{ sim.iters }}"></progress>
+                    <img style="border-radius:3px;width:100%" id="plot-img" src="{{ rep.img }}">
                 </div>
             </div>
         </div>
@@ -76,4 +76,16 @@
         request.open("POST", window.location.origin+"/abort");
         request.send(formData);
     }
+
+    window.setInterval(function() {
+        var req = new XMLHttpRequest();
+        req.responseType = 'json';
+        req.open('GET', window.location.origin+"/status", true);
+        req.onload = function() {
+            var status = req.response;
+            document.getElementById("sim-number").innerText = document.getElementById("progress-bar").value = status.points
+            document.getElementById("plot-img").src = status.img
+        };
+        req.send(null);
+    },5000);
 {% endblock %}

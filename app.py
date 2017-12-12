@@ -45,6 +45,16 @@ def kill_sim():
 
     return "success", 200
 
+@app.route("/status")
+def status():
+    if running:
+        monte_carlo.get_points(running['id'],running['points'])
+        img = monte_carlo.plot_points(running['points'])
+
+        return json.dumps({'points':len(running['points']),'img':img})
+    else:
+        return "No simulation running", 400
+
 @app.route("/download")
 def download_sim():
     logs = os.path.join(current_app.root_path, 'logs')

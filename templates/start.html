@@ -20,8 +20,8 @@
                                     {% for var in vars %}
                                     <tr>
                                         <td>{{ var.name }} ({{ var.units }})</td>
-                                        <td><input class="input" type="text" placeholder="{{ var.defaults[0] }}"></td>
-                                        <td><input class="input" type="text" placeholder="{{ var.defaults[1] }}"></td>
+                                        <td><input class="input" type="text" value="{{ var.defaults[0] }}"></td>
+                                        <td><input class="input" type="text" value="{{ var.defaults[1] }}"></td>
                                     </tr>
                                     {% endfor %}
                                 </tbody>
