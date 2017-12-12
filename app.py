@@ -18,16 +18,22 @@ def allowed_file(filename):
 @app.route("/")
 def main():
     if running:
-        return render_template('running.html',sim=running,rep={'iters':3,'img':'a'})
+        points = monte_carlo.get_points(running['id'])
+        img = monte_carlo.plot_points(points)
+        return render_template('running.html',sim=running,rep={'iters':len(points),'img':img})
     else:
         return render_template('start.html',vars=monte_carlo.MASTER_VARS, params=monte_carlo.MASTER_STATS)
 
-@app.route("/abort")
+@app.route("/abort",methods=['POST'])
 def kill_sim():
     global running
     global thread
 
-    thread.terminate()
+    if request.form.get('password') != PASSWORD:
+        return "Wrong password", 401
+
+    if thread:
+        thread.terminate()
     thread = None
     running = None
 
@@ -62,6 +68,6 @@ def start():
     running = {'gauss':gauss,'params':params,'iters':iters, 'filename':filename, 'id': sim_id}
 
     thread = Process(target=monte_carlo.run_sims, args=(running,))
-    #thread.start()
+    thread.start()
 
     return "success", 200

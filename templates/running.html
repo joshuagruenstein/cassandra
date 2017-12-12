@@ -46,7 +46,7 @@
             <div class="tile is-child notification is-primary">
                 <p class="title">Status: <span id="sim-number">{{ rep.iters }}</span>/{{ sim.iters }} complete</p>
                 <div class="content">
-                    <progress class="progress is-large" value="12" max="20"></progress>
+                    <progress class="progress is-large" value="{{ rep.iters }}" max="{{ sim.iters }}"></progress>
                     <img style="border-radius:3px;width:100%"src="{{ rep.img }}">
                 </div>
             </div>
@@ -73,7 +73,7 @@
             }
         }
 
-        request.open("POST", window.location.hostname+"/abort");
+        request.open("POST", window.location.origin+"/abort");
         request.send(formData);
     }
 {% endblock %}
