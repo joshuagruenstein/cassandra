@@ -1,1 +1,120 @@
-Hello World (wow)!
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Cassandra</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bulma/0.6.1/css/bulma.min.css">
+</head>
+<body style="display: flex;min-height: 100vh;flex-direction: column;">
+    <section class="hero is-primary" style="background-color:#A31F34">
+        <div class="hero-body">
+            <div class="container">
+                <h1 class="title">
+                    Cassandra v0.1
+                </h1>
+                <h2 class="subtitle">
+                    Monte Carlo Dispersion Analysis Engine
+                </h2>
+            </div>
+        </div>
+    </section>
+
+    <section class="section" style="flex:1">
+        <div class="notification is-warning" style="display:none" id="warning">
+            <button class="delete" onclick="document.getElementById('warning').style.display='none'"></button>
+            <strong> Fatal error. </strong> <span id="warning-text">Something bad happened.</span>
+        </div>
+
+        <div class="tile is-ancestor">
+            <div class="tile is-parent is-vertical">
+                <div class="tile is-child ">
+                    <p class="title">Simulation Properties</p>
+                    <div class="content">
+                        <ul>
+                            <li>Total iterations: 10</li>
+                            <li>Tracking properties: time, altitude, vertical velocity</li>
+                            <li>Gaussian variables:</li>
+                            <ul>
+                                <li>Wind speed: 10m/s &plusmn; 1</li>
+                                <li>Rod angle: 2 degrees &plusmn; 1</li>
+                            </ul>
+                        </ul>
+                    </div>
+                </div>
+                <div class="tile is-child">
+                    <a href="/download" class="button is-link" style="margin-bottom:8px" download target="_blank">
+                        <span class="icon">
+                            <i class="fa fa-arrow-circle-o-down"></i>
+                        </span><span>Download Report</span>
+                    </a>
+
+                    <div class="field has-addons">
+                        <p class="control">
+                            <input class="input" id="abort-password-field" type="password" placeholder="Password">
+                        </p>
+                        <p class="control">
+                            <a id="abort" class="button is-warning" onclick="abort_simulation()">
+                                <span class="icon">
+                                    <i class="fa fa-ban"></i>
+                                </span>
+                                <span>Abort Simulation</span>
+                            </a>
+                        </p>
+                    </div>
+                </div>
+
+            </div>
+            <div class="tile is-6 is-parent">
+                <div class="tile is-child notification is-primary">
+                    <p class="title">Status: <span id="sim-number">12</span>/20 complete</p>
+                    <div class="content">
+                        <progress class="progress is-large" value="12" max="20"></progress>
+                        <img style="border-radius:3px;width:100%"src="https://www.petmd.com/sites/default/files/petmd-cat-happy-10.jpg">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <footer class="footer">
+        <div class="container">
+            <div class="content has-text-centered">
+                <p>
+                    <strong>Cassandra</strong> (v0.1) by <a href="http://rocketry.mit.edu/">MIT Rocket Team</a>. For usage information visit the <a href="#">wiki page</a>.
+                </p>
+            </div>
+        </div>
+    </footer>
+    <script>
+        function alert_error(message) {
+            document.getElementById('warning-text').innerText = message;
+            document.getElementById('warning').style.display='block';
+        }
+
+        function abort_simulation() {
+            var password = document.getElementById("abort-password-field").value;
+            if (!password) {
+                alert_error("Must enter password to abort simulation.")
+                return;
+            }
+
+            var formData = new FormData();
+            formData.append('password',password);
+            var request = new XMLHttpRequest();
+
+            request.onreadystatechange = function() {
+                if (request.readyState === 4) {
+                    if (request.status === 200) location.reload(true);
+                    else alert_error("Failed to abort simulation. Likely incorrect password.");
+                }
+            }
+
+            request.open("POST", window.location.hostname+"/abort");
+            request.send(formData);
+        }
+    </script>
+
+</body>
+</html>
