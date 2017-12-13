@@ -35,13 +35,13 @@ def jog_thread():
     if running:
         if thread:
             thread.terminate()
-    
+
         thread = Process(target=monte_carlo.run_sims, args=(running,))
         thread.start()
 
 def jog_poller():
     global wasAt
-    
+
     if running:
         monte_carlo.get_points(running['id'],running['points'])
         num_points = len(running['points'])
@@ -90,9 +90,9 @@ def restart():
 
     running['id'] = new_id()
     running['points'] = []
-    
+
     jog_thread()
-    
+
     return "success", 200
 
 @app.route("/addpoints",methods=['POST'])
@@ -168,3 +168,5 @@ def start():
 
     return "success", 200
 
+if __name__ == "__main__":
+    app.run(host='0.0.0.0', port=80)

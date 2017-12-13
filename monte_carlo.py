@@ -48,7 +48,7 @@ def get_points(id,old_points):
                     lastDist = sim['data']['Lateral distance'][-1]
                     lastDir = sim['data']['Lateral direction'][-1]
                     altitude = max(sim['data']['Altitude'])
-                    
+
                     point = [('x',lastDist*math.cos(lastDir)),('y',lastDist*math.sin(lastDir)),('z',altitude)]
                     for key in sim['data']:
                         if not key in DEFAULT_STATS:
@@ -60,7 +60,7 @@ def get_points(id,old_points):
 def get_aggregate(points):
     if len(points) < 1:
         return None
-    
+
     aggregate = OrderedDict()
     for key in points[0]:
         aggregate[key] = []
@@ -129,17 +129,18 @@ def plot_points(points):
 # Run a dispersion analysis with given settings.  Output is a .cass file.
 def run_sims(settings):
     log_file = "logs/" + settings['id'] + ".cass"
-    
+
     if not os.path.isfile(log_file):
         with open(log_file,'w') as sim_file:
             sim_file.write('MIT Rocket Team Cassandra v0.1 Analysis' + os.linesep)
             sim_file.write('Date: ' + datetime.now().strftime("%Y-%m-%d %H:%M") + os.linesep)
             sim_file.write('Params: ' + json.dumps(settings) + os.linesep + os.linesep)
 
-    with orhelper.OpenRocketInstance('/root/mcda/req/OpenRocket.jar', log_level='DEBUG'):
+    print("Current directory: " + str(os.getcwd()))
+    with orhelper.OpenRocketInstance('/app/req/OpenRocket.jar', log_level='DEBUG'):
         # Load the document and get simulation
         orh = orhelper.Helper()
-        doc = orh.load_doc('/root/mcda/rockets/'+settings['filename'])
+        doc = orh.load_doc('/app/rockets/'+settings['filename'])
         sim = doc.getSimulation(0)
 
         opts = sim.getOptions()
@@ -147,7 +148,7 @@ def run_sims(settings):
 
         for p in range(settings['iters']+1):
             print('Running simulation ', p)
-            
+
             wind_dir = get_prop(settings['gauss'],'Wind direction')
 
             opts.setLaunchRodAngle(math.radians(get_prop(settings['gauss'],'Rod angle')))
