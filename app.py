@@ -14,7 +14,7 @@ class MyFlask(Flask):
 app = MyFlask(__name__)
 cron = BackgroundScheduler()
 
-PASSWORD = "a"
+PASSWORD = os.environ['PASSWORD']
 
 running = None
 thread = None

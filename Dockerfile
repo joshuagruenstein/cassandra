@@ -4,6 +4,9 @@ WORKDIR /app
 
 ADD . /app
 
+RUN mkdir -p logs
+RUN mkdir -p rockets
+
 RUN sed 's/main$/main universe/' -i /etc/apt/sources.list
 RUN apt-get update && apt-get install -y software-properties-common python-software-properties
 RUN add-apt-repository ppa:webupd8team/java -y
