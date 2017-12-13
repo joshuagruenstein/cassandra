@@ -129,10 +129,12 @@ def plot_points(points):
 # Run a dispersion analysis with given settings.  Output is a .cass file.
 def run_sims(settings):
     log_file = "logs/" + settings['id'] + ".cass"
-    with open(log_file,'w') as sim_file:
-        sim_file.write('MIT Rocket Team Cassandra v0.1 Analysis' + os.linesep)
-        sim_file.write('Date: ' + datetime.now().strftime("%Y-%m-%d %H:%M") + os.linesep)
-        sim_file.write('Params: ' + json.dumps(settings) + os.linesep + os.linesep)
+    
+    if not os.path.isfile(log_file):
+        with open(log_file,'w') as sim_file:
+            sim_file.write('MIT Rocket Team Cassandra v0.1 Analysis' + os.linesep)
+            sim_file.write('Date: ' + datetime.now().strftime("%Y-%m-%d %H:%M") + os.linesep)
+            sim_file.write('Params: ' + json.dumps(settings) + os.linesep + os.linesep)
 
     with orhelper.OpenRocketInstance('/root/mcda/req/OpenRocket.jar', log_level='DEBUG'):
         # Load the document and get simulation
@@ -142,8 +144,6 @@ def run_sims(settings):
 
         opts = sim.getOptions()
         rocket = opts.getRocket()
-
-        sims = []
 
         for p in range(settings['iters']+1):
             print('Running simulation ', p)
@@ -158,14 +158,6 @@ def run_sims(settings):
             opts.setLaunchPressure(get_prop(settings['gauss'],'Launch pressure'))
             opts.setLaunchRodLength(get_prop(settings['gauss'],'Rod length'))
 
-            """
-            for component_name in ('Nose cone', 'Body tube'):       # 5% in the mass of various components
-                component = orh.get_component_named( rocket, component_name )
-                mass = component.getMass()
-                component.setMassOverridden(True)
-                component.setOverrideMass( mass * gauss(1.0, 0.05) )
-            """
-
             orh.run_simulation(sim)
             data = orh.get_timeseries(sim,DEFAULT_STATS+settings['params'])
             events = orh.get_events(sim)
@@ -175,12 +167,10 @@ def run_sims(settings):
                     data[key] += math.radians(wind_dir)
                 data[key] = data[key].tolist()
 
-            sims.append({'data':data,'events':events})
+            datapoint = {'data':data,'events':events}
             with open(log_file,'a') as sim_file:
-                json.dump(sims[-1], sim_file)
+                json.dump(datapoint, sim_file)
                 sim_file.write(os.linesep)
-
-        return sims
 
 if __name__ == '__main__':
     points = []

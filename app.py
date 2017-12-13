@@ -1,25 +1,58 @@
-import flask
 from flask import Flask, Response, request, render_template, current_app, send_from_directory
 from werkzeug.utils import secure_filename
 from multiprocessing import Process
+from apscheduler.schedulers.background import BackgroundScheduler
 import string, json, random, os
 import monte_carlo
 
-class MyFlask(flask.Flask):
+class MyFlask(Flask):
     def get_send_file_max_age(self, name):
         if name.lower().endswith('.cass'):
             return 0
-        return flask.Flask.get_send_file_max_age(self, name)
+        return Flask.get_send_file_max_age(self, name)
 
 app = MyFlask(__name__)
+cron = BackgroundScheduler()
 
 PASSWORD = "a"
 
 running = None
 thread = None
+wasAt = None
 
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() == 'ork'
+
+def new_id():
+    return ''.join([random.choice(string.ascii_letters + string.digits + string.digits) for _ in range(20)])
+
+def jog_thread():
+    global thread
+    global wasAt
+
+    wasAt = None
+
+    if running:
+        if thread:
+            thread.terminate()
+    
+        thread = Process(target=monte_carlo.run_sims, args=(running,))
+        thread.start()
+
+def jog_poller():
+    global wasAt
+    
+    if running:
+        monte_carlo.get_points(running['id'],running['points'])
+        num_points = len(running['points'])
+
+        if num_points != running['iters'] and wasAt == num_points:
+            jog_thread()
+        else:
+            wasAt = num_points
+
+cron.add_job(jog_poller, trigger='interval', seconds=30)
+cron.start()
 
 @app.route("/")
 def main():
@@ -34,6 +67,9 @@ def main():
 def kill_sim():
     global running
     global thread
+    global wasAt
+
+    wasAt = None
 
     if request.form.get('password') != PASSWORD:
         return "Wrong password", 401
@@ -42,6 +78,37 @@ def kill_sim():
         thread.terminate()
     thread = None
     running = None
+
+    return "success", 200
+
+@app.route("/restart",methods=['POST'])
+def restart():
+    global running
+
+    if request.form.get('password') != PASSWORD:
+        return "Wrong password", 401
+
+    running['id'] = new_id()
+    running['points'] = []
+    
+    jog_thread()
+    
+    return "success", 200
+
+@app.route("/addpoints",methods=['POST'])
+def addpoints():
+    global running
+
+    #if request.form.get('password') != PASSWORD:
+    #    return "Wrong password", 401
+    try:
+        points = int(request.form.get('points'))
+    except Exception:
+        return "Noninteger points summand", 400
+
+    running['iters'] += points
+
+    jog_thread()
 
     return "success", 200
 
@@ -90,7 +157,7 @@ def start():
     filename = secure_filename(ork.filename)
     ork.save(os.path.join('rockets', filename))
 
-    sim_id = ''.join([random.choice(string.ascii_letters + string.digits + string.digits) for _ in range(20)])
+    sim_id = new_id()
 
     running = {'gauss':gauss,'params':params,'iters':iters, 'filename':filename, 'id': sim_id}
 
@@ -100,3 +167,4 @@ def start():
     running['points'] = []
 
     return "success", 200
+

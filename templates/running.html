@@ -34,13 +34,39 @@
                     </span><span>Download CSV Highlights</span>
                 </a>
 
+                 <div class="field has-addons">
+                    <p class="control">
+                        <input class="input" id="add-points-field" type="text" placeholder="10">
+                    </p>
+                    <p class="control">
+                        <a id="add" class="button is-info" onclick="add_points()">
+                            <span class="icon">
+                                <i class="fa fa-plus"></i>
+                            </span>
+                            <span>Add datapoints</span>
+                        </a>
+                    </p>
+                </div>
 
                 <div class="field has-addons">
+                    <p class="control">
+                        <input class="input" id="restart-password-field" type="password" placeholder="Password">
+                    </p>
+                    <p class="control">
+                        <a id="restart" class="button is-warning" onclick="control_simulation('restart')">
+                            <span class="icon">
+                                <i class="fa fa-refresh"></i>
+                            </span>
+                            <span>Restart Simulation</span>
+                        </a>
+                    </p>
+                </div>
+                 <div class="field has-addons">
                     <p class="control">
                         <input class="input" id="abort-password-field" type="password" placeholder="Password">
                     </p>
                     <p class="control">
-                        <a id="abort" class="button is-warning" onclick="abort_simulation()">
+                        <a id="abort" class="button is-danger" onclick="control_simulation('abort')">
                             <span class="icon">
                                 <i class="fa fa-ban"></i>
                             </span>
@@ -48,6 +74,7 @@
                         </a>
                     </p>
                 </div>
+
             </div>
 
         </div>
@@ -64,10 +91,10 @@
 {% endblock %}
 
 {% block script %}
-    function abort_simulation() {
-        var password = document.getElementById("abort-password-field").value;
+    function control_simulation(type) {
+        var password = document.getElementById(type + "-password-field").value;
         if (!password) {
-            alert_error("Must enter password to abort simulation.")
+            alert_error("Must enter password to " + type + " simulation.")
             return;
         }
 
@@ -78,12 +105,32 @@
         request.onreadystatechange = function() {
             if (request.readyState === 4) {
                 if (request.status === 200) location.reload(true);
-                else alert_error("Failed to abort simulation. Likely incorrect password.");
+                else alert_error("Failed to " + type + " simulation. Likely incorrect password.");
             }
         }
 
-        request.open("POST", window.location.origin+"/abort");
+        request.open("POST", window.location.origin+"/"+type);
         request.send(formData);
+    }
+    
+    function add_points() {
+        var num_points = parseInt(document.getElementById("add-points-field").value);
+        if (isNaN(num_points)) {
+            alert_error("Must add an integer number of new iterations.");
+        } else {
+            var formData = new FormData();
+            formData.append('points',num_points);
+            var request = new XMLHttpRequest();
+            request.onreadystatechange = function() {
+                if (request.readyState === 4) {
+                    if (request.status === 200) location.reload(true);
+                    else alert_error("Failed to add iterations.");
+                }
+            }
+
+            request.open("POST",window.location.origin + "/addpoints");
+            request.send(formData);
+        }
     }
 
     window.setInterval(function() {
@@ -91,9 +138,13 @@
         req.responseType = 'json';
         req.open('GET', window.location.origin+"/status", true);
         req.onload = function() {
-            var status = req.response;
-            document.getElementById("sim-number").innerText = document.getElementById("progress-bar").value = status.points
-            document.getElementById("plot-img").src = status.img
+            if (req.status === 200) {
+                var status = req.response;
+                document.getElementById("sim-number").innerText = document.getElementById("progress-bar").value = status.points
+                document.getElementById("plot-img").src = status.img
+            } else if (req.status === 400) {
+                location.reload(true);
+            }
         };
         req.send(null);
     },5000);
