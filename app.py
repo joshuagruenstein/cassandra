@@ -46,7 +46,7 @@ def jog_poller():
         monte_carlo.get_points(running['id'],running['points'])
         num_points = len(running['points'])
 
-        if num_points != running['iters'] and wasAt == num_points:
+        if num_points < running['iters'] and wasAt == num_points:
             jog_thread()
         else:
             wasAt = num_points
@@ -77,6 +77,11 @@ def kill_sim():
     if thread:
         thread.terminate()
     thread = None
+
+    try:
+        os.remove("logs/" + running['id'] + ".cass")
+    except OSError:
+        pass
     running = None
 
     return "success", 200
@@ -87,6 +92,12 @@ def restart():
 
     if request.form.get('password') != PASSWORD:
         return "Wrong password", 401
+
+
+    try:
+        os.remove("logs/" + running['id'] + ".cass")
+    except OSError:
+        pass
 
     running['id'] = new_id()
     running['points'] = []
@@ -159,12 +170,10 @@ def start():
 
     sim_id = new_id()
 
-    running = {'gauss':gauss,'params':params,'iters':iters, 'filename':filename, 'id': sim_id}
+    running = {'gauss':gauss,'params':params,'iters':iters, 'filename':filename, 'id': sim_id, 'points':[]}
 
     thread = Process(target=monte_carlo.run_sims, args=(running,))
     thread.start()
-
-    running['points'] = []
 
     return "success", 200
 

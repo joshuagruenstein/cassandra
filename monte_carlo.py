@@ -48,8 +48,9 @@ def get_points(id,old_points):
                     lastDist = sim['data']['Lateral distance'][-1]
                     lastDir = sim['data']['Lateral direction'][-1]
                     altitude = max(sim['data']['Altitude'])
+                    time = sim['data']['Time'][-1]
 
-                    point = [('x',lastDist*math.cos(lastDir)),('y',lastDist*math.sin(lastDir)),('z',altitude)]
+                    point = [('time',time),('x',lastDist*math.cos(lastDir)),('y',lastDist*math.sin(lastDir)),('z',altitude)]
                     for key in sim['data']:
                         if not key in DEFAULT_STATS:
                             point.extend([(key+'_min',min(sim['data'][key])),(key+'_max',max(sim['data'][key])),(key+'_mean',sum(sim['data'][key])/len(sim['data'][key]))])
@@ -130,11 +131,15 @@ def plot_points(points):
 def run_sims(settings):
     log_file = "logs/" + settings['id'] + ".cass"
 
+    points_done = -1
     if not os.path.isfile(log_file):
         with open(log_file,'w') as sim_file:
             sim_file.write('MIT Rocket Team Cassandra v0.1 Analysis' + os.linesep)
             sim_file.write('Date: ' + datetime.now().strftime("%Y-%m-%d %H:%M") + os.linesep)
             sim_file.write('Params: ' + json.dumps(settings) + os.linesep + os.linesep)
+    else:
+        get_points(settings['id'],settings['points'])
+        points_done = len(settings['points'])
 
     print("Current directory: " + str(os.getcwd()))
     with orhelper.OpenRocketInstance('/app/req/OpenRocket.jar', log_level='DEBUG'):
@@ -146,8 +151,8 @@ def run_sims(settings):
         opts = sim.getOptions()
         rocket = opts.getRocket()
 
-        for p in range(settings['iters']+1):
-            print('Running simulation ', p)
+        for p in range(points_done,settings['iters']):
+            print('Running simulation ', p+1)
 
             wind_dir = get_prop(settings['gauss'],'Wind direction')
 
@@ -172,8 +177,3 @@ def run_sims(settings):
             with open(log_file,'a') as sim_file:
                 json.dump(datapoint, sim_file)
                 sim_file.write(os.linesep)
-
-if __name__ == '__main__':
-    points = []
-    get_points('report(6)',points)
-    print(highlight_csv(points))
