@@ -34,15 +34,56 @@
         <div class="container">
             <div class="content has-text-centered">
                 <p>
-                    <strong>Cassandra</strong> (v0.1) by <a href="http://rocketry.mit.edu/">MIT Rocket Team</a>. For usage information visit the <a href="#">wiki page</a>.
+                    <strong>Cassandra</strong> (v0.1) by <a href="http://rocketry.mit.edu/">MIT Rocket Team</a>. For usage instructions click <a href="#" id="open-modal" onclick="open_modal()">here</a>.
                 </p>
             </div>
         </div>
     </footer>
+    <div class="modal">
+        <div class="modal-background"></div>
+        <div class="modal-card">
+            <header class="modal-card-head">
+                <p class="modal-card-title">Cassandra usage instructions</p>
+                <button class="delete" aria-label="close"></button>
+            </header>
+            <section class="modal-card-body">
+                <div class="content">
+                <p>To run an analysis, simply perform the following steps.  If you run into any problems, post an issue on Cassandra Github page.</p>
+                <ol>
+                    <li>Download the <a href="https://github.com/joshuagruenstein/cassandra/raw/master/req/OpenRocket.jar">custom Cassandra build of OpenRocket</a>.</li>
+                    <li>Create a rocket file, or open one from another version of OpenRocket. Most .ork files should work, but if not create a new one.</li>
+                    <li>Run at least one simulation using the motor you want Cassandra to simulate on, and make sure it succeeds.</li>
+                    <li>Save the <code>.ork</code> file somewhere accessible.</li>
+                    <li>Navigate to Cassandra in the browser. Enter all the required Gaussian variables and the number of points you want to plot, select the <code>.ork</code> file, and mark any additional variables you want Cassandra to keep track of.</li>
+                    <li>Enter the master password, and click <code>Run Simulation</code>.</li>
+                </ol>
+                <p>This should bring you to a new page, with a blank grid on the right. Give Cassandra a couple seconds to start plotting points. Once you've got a few, you can download a CSV report and open it in Excel, or a full report to analyse using a tool like Python.</p><br />
+                </div>
+            </section>
+            <footer class="modal-card-foot">
+                <a href="https://github.com/joshuagruenstein/cassandra" class="button">
+                    <span class="icon">
+                        <i class="fa fa-github"></i>
+                    </span><span>View on Github</span>
+                </a>
+            </footer>
+        </div>
+    </div>
     <script>
         function alert_error(message) {
             document.getElementById('warning-text').innerText = message;
             document.getElementById('warning').style.display='block';
+        }
+
+        function open_modal() {
+            var modal = document.querySelector('.modal');
+            var html = document.querySelector('html');
+
+            modal.classList.add('is-active');
+            modal.querySelector('.delete').addEventListener('click', function(e) {
+                e.preventDefault();
+                modal.classList.remove('is-active');
+            });
         }
 
         {% block script %}{% endblock %}
