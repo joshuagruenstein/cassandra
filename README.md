@@ -1,6 +1,6 @@
 
 # Cassandra
- [![License: GPL v3](https://img.shields.io/badge/License-GPL%20v3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0) [![Docker Build Status](https://img.shields.io/docker/build/nanogru/cassandra.svg)](https://hub.docker.com/r/nanogru/cassandra)
+ [![License: GPL v3](https://img.shields.io/badge/License-GPL%20v3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0) [![MIT licensed](https://img.shields.io/badge/license-MIT-blue.svg)](https://raw.githubusercontent.com/hyperium/hyper/master/LICENSE) [![Docker Build Status](https://img.shields.io/docker/build/nanogru/cassandra.svg)](https://hub.docker.com/r/nanogru/cassandra)
 
 Monte-carlo dispersion analysis in the browser, powered by [OpenRocket](https://github.com/openrocket/openrocket).
 
@@ -42,4 +42,4 @@ Every time a simulation is requested, Cassandra starts a simulation in a new thr
 
 ### License
 
-Cassandra is open source software distributed under the [GPL v3](https://www.gnu.org/licenses/gpl-3.0) license.
+Cassandra is open source software.  The Python and OpenRocket integration is distributed under the [GPL v3](https://www.gnu.org/licenses/gpl-3.0) license, while the frontend is distributed under the [MIT](https://opensource.org/licenses/MIT) license.
