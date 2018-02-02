@@ -52,6 +52,24 @@
                                 </span>
                             </label>
                         </div>
+
+                        <p class="subtitle" style="margin-top:1em;margin-bottom:0.25em">Motor file (optional)</p>
+                        <div class="file has-name is-right is-fullwidth">
+                            <label class="file-label">
+                                <input class="file-input" type="file" id="motor-file">
+                                <span class="file-cta">
+                                    <span class="file-icon">
+                                        <i class="fa fa-upload"></i>
+                                    </span>
+                                    <span class="file-label">
+                                        Choose a file…
+                                    </span>
+                                </span>
+                                <span class="file-name" id="motor-file-name">
+                                    No file selected.
+                                </span>
+                            </label>
+                        </div>
                     </div>
                 </article>
             </div>
@@ -100,12 +118,19 @@
 
 
 {% block script %}
-    var file = document.getElementById("rocket-file");
-    var file_selected = false;
-    file.onchange = function() {
-        if (file.files.length > 0) {
-            document.getElementById('rocket-file-name').innerHTML = file.files[0].name;
-            file_selected = true;
+    var rocket_file = document.getElementById("rocket-file");
+    var motor_file = document.getElementById("motor-file");
+    var rocket_file_selected = false;
+    rocket_file.onchange = function() {
+        if (rocket_file.files.length > 0) {
+            document.getElementById('rocket-file-name').innerHTML = rocket_file.files[0].name;
+            rocket_file_selected = true;
+        }
+    };
+
+    motor_file.onchange = function() {
+        if (motor_file.files.length > 0) {
+            document.getElementById('motor-file-name').innerHTML = motor_file.files[0].name;
         }
     };
 
@@ -142,12 +167,18 @@
     }
 
     function getRocketFile() {
-        var retFile = file.files[0];
-        if (file_selected && retFile && retFile.name.split('.').pop() == "ork") return retFile;
+        var retFile = rocket_file.files[0];
+        if (rocket_file_selected && retFile && retFile.name.split('.').pop() == "ork") return retFile;
         else {
             alert_error("Must upload a .ork file.");
             return null;
         }
+    }
+
+    function getMotorFile() {
+        var retFile = motor_file.files[0];
+        if (retFile) return retFile;
+        else return null;
     }
 
     function getIterations() {
@@ -164,6 +195,7 @@
         var gauss, params, file, iters, password = getPassword();
 
         if ((gauss = getGauss()) && (params = getParams()) && (file = getRocketFile()) && (iters = getIterations())) {
+            var motor = getMotorFile()
             document.getElementById('warning').style.display='none';
             submit.className += " is-loading";
 
@@ -173,6 +205,7 @@
             formData.append('iters',iters);
             formData.append('password',password);
             formData.append('ork',file);
+            if (motor) formData.append('eng',motor);
 
             var request = new XMLHttpRequest();
 
