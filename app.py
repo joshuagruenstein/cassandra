@@ -165,6 +165,11 @@ def start():
     if not ork or not allowed_file(ork.filename) or ork.filename == '':
         return "File upload error", 500
 
+    if 'eng' in request.files:
+        eng = request.files['eng']
+        motor_name = secure_filename(eng.filename)
+        eng.save(os.path.join('/root/.openrocket/ThrustCurves',motor_name))
+
     filename = secure_filename(ork.filename)
     ork.save(os.path.join('rockets', filename))
 

@@ -2,7 +2,7 @@ FROM ubuntu:16.04
 
 WORKDIR /app
 
-ADD . /app
+ADD req /app/req
 
 RUN mkdir -p logs
 RUN mkdir -p rockets
@@ -27,6 +27,10 @@ RUN export JAVA_HOME="/usr/lib/jvm/java-7-oracle/"
 RUN pip install numpy matplotlib jpype1 flask apscheduler
 RUN sudo Xvfb :1 -screen 0 1024x768x24 </dev/null &
 RUN export DISPLAY=":1"
+
+RUN mkdir -p /root/.openrocket/ThrustCurves
+
+ADD . /app
 
 EXPOSE 80
 CMD ["python","app.py"]
