@@ -142,7 +142,7 @@ def run_sims(settings):
         points_done = len(settings['points'])
 
     print("Current directory: " + str(os.getcwd()))
-    with orhelper.OpenRocketInstance('/app/req/OpenRocket.jar', log_level='DEBUG'):
+    with orhelper.OpenRocketInstance('/app/req/OpenRocket.jar'):
         # Load the document and get simulation
         orh = orhelper.Helper()
         doc = orh.load_doc('/app/rockets/'+settings['filename'])

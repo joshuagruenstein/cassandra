@@ -59,7 +59,10 @@ def main():
     if running:
         monte_carlo.get_points(running['id'],running['points'])
         img = monte_carlo.plot_points(running['points'])
-        return render_template('running.html',sim=running,rep={'iters':len(running['points']),'img':img})
+
+        processed_points = json.dumps([[point['x'],point['y'],point['z']] for point in running['points']])
+
+        return render_template('running.html',sim=running,rep={'iters':len(running['points']),'points':processed_points})
     else:
         return render_template('start.html',vars=monte_carlo.MASTER_VARS, params=monte_carlo.MASTER_STATS)
 
@@ -129,7 +132,9 @@ def status():
         monte_carlo.get_points(running['id'],running['points'])
         img = monte_carlo.plot_points(running['points'])
 
-        return json.dumps({'points':len(running['points']),'img':img})
+        processed_points = [[point['x'],point['y'],point['z']] for point in running['points']]
+
+        return json.dumps({'points':len(running['points']),'img':img, 'plot':processed_points})
     else:
         return "No simulation running", 400
 

@@ -83,7 +83,8 @@
                 <p class="title">Status: <span id="sim-number">{{ rep.iters }}</span>/{{ sim.iters }} complete</p>
                 <div class="content">
                     <progress class="progress is-large" id="progress-bar" value="{{ rep.iters }}" max="{{ sim.iters }}"></progress>
-                    <img style="border-radius:3px;width:100%" id="plot-img" src="{{ rep.img }}">
+
+                    <div style="margin: auto; border-radius:5px; width: 450px; height: 350px;" id="chart"></div>
                 </div>
             </div>
         </div>
@@ -91,61 +92,101 @@
 {% endblock %}
 
 {% block script %}
-    function control_simulation(type) {
-        var password = document.getElementById(type + "-password-field").value;
-        if (!password) {
-            alert_error("Must enter password to " + type + " simulation.")
-            return;
+
+var chart = document.getElementById('chart');
+var plot = echarts.init(chart);
+
+function round(value, decimals) {
+    return Number(Math.round(value+'e'+decimals)+'e-'+decimals);
+}
+
+function control_simulation(type) {
+    var password = document.getElementById(type + "-password-field").value;
+    if (!password) {
+        alert_error("Must enter password to " + type + " simulation.")
+        return;
+    }
+
+    var formData = new FormData();
+    formData.append('password',password);
+    var request = new XMLHttpRequest();
+
+    request.onreadystatechange = function() {
+        if (request.readyState === 4) {
+            if (request.status === 200) location.reload(true);
+            else alert_error("Failed to " + type + " simulation. Likely incorrect password.");
         }
+    }
 
+    request.open("POST", window.location.origin+"/"+type);
+    request.send(formData);
+}
+
+function add_points() {
+    var num_points = parseInt(document.getElementById("add-points-field").value);
+    if (isNaN(num_points)) {
+        alert_error("Must add an integer number of new iterations.");
+    } else {
         var formData = new FormData();
-        formData.append('password',password);
+        formData.append('points',num_points);
         var request = new XMLHttpRequest();
-
         request.onreadystatechange = function() {
             if (request.readyState === 4) {
                 if (request.status === 200) location.reload(true);
-                else alert_error("Failed to " + type + " simulation. Likely incorrect password.");
+                else alert_error("Failed to add iterations.");
             }
         }
 
-        request.open("POST", window.location.origin+"/"+type);
+        request.open("POST",window.location.origin + "/addpoints");
         request.send(formData);
     }
-    
-    function add_points() {
-        var num_points = parseInt(document.getElementById("add-points-field").value);
-        if (isNaN(num_points)) {
-            alert_error("Must add an integer number of new iterations.");
-        } else {
-            var formData = new FormData();
-            formData.append('points',num_points);
-            var request = new XMLHttpRequest();
-            request.onreadystatechange = function() {
-                if (request.readyState === 4) {
-                    if (request.status === 200) location.reload(true);
-                    else alert_error("Failed to add iterations.");
-                }
-            }
+}
 
-            request.open("POST",window.location.origin + "/addpoints");
-            request.send(formData);
+var initialOption = {
+    xAxis: {},
+    yAxis: {},
+    tooltip : {
+        // trigger: 'axis',
+        showDelay : 0,
+        formatter : function (params) {
+            return 'Flight Data :<br/>x, y: ' + round(params.value[0],2) + 'm, ' + round(params.value[1],2) + 'm<br />Altitude: ' + round(params.value[2],2) + 'm';
+        },
+        axisPointer:{
+            show: true,
+            type : 'cross',
+            lineStyle: {
+                type : 'dashed',
+                width : 1
+            }
         }
-    }
+    },
 
-    window.setInterval(function() {
-        var req = new XMLHttpRequest();
-        req.responseType = 'json';
-        req.open('GET', window.location.origin+"/status", true);
-        req.onload = function() {
-            if (req.status === 200) {
-                var status = req.response;
-                document.getElementById("sim-number").innerText = document.getElementById("progress-bar").value = status.points
-                document.getElementById("plot-img").src = status.img
-            } else if (req.status === 400) {
-                location.reload(true);
-            }
-        };
-        req.send(null);
-    },5000);
+    series: [{
+        symbolSize: 10,
+        data: {{ rep.points }},
+        type: 'scatter'
+    }]
+};
+
+plot.setOption(initialOption);
+
+window.setInterval(function() {
+    var req = new XMLHttpRequest();
+    req.responseType = 'json';
+    req.open('GET', window.location.origin+"/status", true);
+    req.onload = function() {
+        if (req.status === 200) {
+            var status = req.response;
+            document.getElementById("sim-number").innerText = document.getElementById("progress-bar").value = status.points
+            console.log(status.plot);
+            plot.setOption({series:[{
+                data: status.plot
+            }]});
+        } else if (req.status === 400) {
+            location.reload(true);
+        }
+    };
+    req.send(null);
+},1000);
+
 {% endblock %}
