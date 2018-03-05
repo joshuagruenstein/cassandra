@@ -2,7 +2,7 @@
 # Cassandra
  [![License: GPL v3](https://img.shields.io/badge/License-GPL%20v3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0) [![MIT licensed](https://img.shields.io/badge/license-MIT-blue.svg)](https://raw.githubusercontent.com/hyperium/hyper/master/LICENSE) [![Docker Build Status](https://img.shields.io/docker/build/nanogru/cassandra.svg)](https://hub.docker.com/r/nanogru/cassandra)
 
-Monte-carlo dispersion analysis in the browser, powered by [OpenRocket](https://github.com/openrocket/openrocket).
+Monte-carlo dispersion analysis in the browser, powered by [OpenRocket](https://github.com/openrocket/openrocket).  Created by and for MIT Rocket Team.
 
 ## Usage
 
