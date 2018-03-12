@@ -31,9 +31,14 @@ MASTER_VARS = [
 ]
 
 # Given a list of dicts with field 'name', return the one with the given name.
-def get_prop(gauss,name):
+def get_prop(gauss,name,angle=False):
     i = next((i for i in gauss if str(i['name'].split('(')[0].strip()) == str(name)), None)
-    return random.gauss(i['mu'], i['sigma'])
+    sample = random.gauss(i['mu'], i['sigma'])
+    while angle and sample < 0:
+        sample += 360
+    while angle and sample > 360:
+        sample -= 360
+    return sample
 
 # Reads a logfile with a given ID to add unread points to a given list of points.
 def get_points(id,old_points):
@@ -83,7 +88,7 @@ def ellipses(points, max_std_devs):
         lambda_, v = np.linalg.eig(cov)
         lambda_ = np.sqrt(lambda_)
 
-        return [{'x':np.mean(x),'y':np.mean(y),'width':lambda_[0]*j*2,'height':lambda_[1]*j*2,'angle':np.rad2deg(np.arccos(v[0, 0]))} for j in range(1,max_std_devs+1)]
+        return [{'x':np.mean(x),'y':np.mean(y),'height':lambda_[0]*j*2,'width':lambda_[1]*j*2,'angle':np.rad2deg(np.arccos(v[0, 0]))} for j in range(1,max_std_devs+1)]
     else:
         return []
 
@@ -156,8 +161,8 @@ def run_sims(settings):
 
             wind_dir = get_prop(settings['gauss'],'Wind direction')
 
-            opts.setLaunchRodAngle(math.radians(get_prop(settings['gauss'],'Rod angle')))
-            opts.setLaunchRodDirection(math.radians(get_prop(settings['gauss'],'Rod direction')-wind_dir))
+            opts.setLaunchRodAngle(math.radians(get_prop(settings['gauss'],'Rod angle',angle=True)))
+            opts.setLaunchRodDirection(math.radians(get_prop(settings['gauss'],'Rod direction',angle=True)-wind_dir))
 
             opts.setWindSpeedAverage(get_prop(settings['gauss'],'Wind speed'))
             opts.setLaunchTemperature(273.15+get_prop(settings['gauss'],'Launch temperature'))
